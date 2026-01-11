@@ -16,7 +16,8 @@ def build_pipeline(document: PdfDocument, password: str | None = None) -> tuple[
     analyzer = BankDetector(document)
     bank = analyzer.detect_bank(banks) or GenericBank
     parser = PdfParser(bank, document)
-    pipeline = Pipeline(parser, passwords=[SecretStr(password)])
+    passwords = [SecretStr(password)] if password else []
+    pipeline = Pipeline(parser, passwords=passwords)
     return pipeline, parser
 
 
