@@ -105,7 +105,7 @@ def handle_file(document: PdfDocument, file_bytes: bytes) -> ProcessedFile | Non
         processed_file = parse_bank_statement(document)
     except GenericParserError:
         logger.exception("Generic parser failed for %s", document.name)
-        from .fallback_parsers.hlb import try_parse_hlb_primebiz_current_account
+        from webapp.fallback_parsers.hlb import try_parse_hlb_primebiz_current_account
 
         if transactions := try_parse_hlb_primebiz_current_account(file_bytes):
             processed_file = ProcessedFile(transactions, TransactionMetadata(bank_name="HongLeongBank"))
