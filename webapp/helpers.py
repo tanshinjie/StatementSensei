@@ -22,16 +22,19 @@ def build_pipeline(document: PdfDocument, password: str | None = None) -> tuple[
     return pipeline, parser
 
 
-def parse_bank_statement(
-    document: PdfDocument, password: str | None = None, file_bytes: bytes | None = None
-) -> ProcessedFile:
+def parse_bank_statement(document: PdfDocument, password: str | None = None) -> ProcessedFile:
     # Check if this is an HLB statement first (needs custom handling)
-    if file_bytes and HongLeongBankParser.is_hlb_statement(file_bytes):
-        hlb_parser = HongLeongBankParser()
-        transactions = hlb_parser.parse(file_bytes)
-        if transactions:
-            metadata = TransactionMetadata("HongLeongBank")
-            return ProcessedFile(transactions, metadata)
+    # Extract file_bytes from the document for HLB parser
+    try:
+        file_bytes = document.write()
+        if HongLeongBankParser.is_hlb_statement(file_bytes):
+            hlb_parser = HongLeongBankParser()
+            transactions = hlb_parser.parse(file_bytes)
+            if transactions:
+                metadata = TransactionMetadata("HongLeongBank")
+                return ProcessedFile(transactions, metadata)
+    except Exception:
+        pass  # Fall through to standard parsing
 
     try:
         pipeline, parser = build_pipeline(document, password)

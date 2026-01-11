@@ -2,18 +2,19 @@ import logging
 import sys
 from pathlib import Path
 
+# CRITICAL: Fix sys.path BEFORE any other imports
+# Streamlit Cloud runs this file with sys.path[0] set to `.../webapp`,
+# which causes `import webapp.*` to resolve to the installed package.
+# We must insert the repo root FIRST to ensure we load the latest code.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import pandas as pd
 import streamlit as st
 from monopoly.generic.generic import GenericParserError
 from monopoly.pdf import MissingPasswordError, PdfDocument
 from streamlit.runtime.uploaded_file_manager import UploadedFile
-
-# Streamlit Cloud commonly runs this file as a script with `sys.path[0]` set to
-# `.../webapp`, which can cause `import webapp.*` to resolve to the installed
-# package instead of the repo sources. Ensure the repo root is first on sys.path.
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
 
 from webapp.constants import APP_DESCRIPTION
 from webapp.helpers import create_df, parse_bank_statement, show_df
@@ -111,7 +112,7 @@ def handle_file(document: PdfDocument, file_bytes: bytes) -> ProcessedFile | Non
         return st.session_state[cache_key]
 
     try:
-        processed_file = parse_bank_statement(document, file_bytes=file_bytes)
+        processed_file = parse_bank_statement(document)
     except GenericParserError:
         logger.exception("Generic parser failed for %s", document.name)
         st.error(
