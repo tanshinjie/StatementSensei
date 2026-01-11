@@ -111,17 +111,9 @@ def handle_file(document: PdfDocument, file_bytes: bytes) -> ProcessedFile | Non
         return st.session_state[cache_key]
 
     try:
-        processed_file = parse_bank_statement(document)
+        processed_file = parse_bank_statement(document, file_bytes=file_bytes)
     except GenericParserError:
         logger.exception("Generic parser failed for %s", document.name)
-        from webapp.fallback_parsers.hlb import try_parse_hlb_primebiz_current_account
-
-        if transactions := try_parse_hlb_primebiz_current_account(file_bytes):
-            processed_file = ProcessedFile(transactions, TransactionMetadata(bank_name="HongLeongBank"))
-            if cache_key:
-                st.session_state[cache_key] = processed_file
-            return processed_file
-
         st.error(
             f"Couldn't parse {document.name}. This statement format isn't supported yet.",
         )

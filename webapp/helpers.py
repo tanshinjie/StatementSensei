@@ -9,6 +9,7 @@ from monopoly.pipeline import Pipeline
 from monopoly.statements.base import SafetyCheckError
 from pydantic import SecretStr
 
+from webapp.banks import HongLeongBankParser
 from webapp.models import ProcessedFile, TransactionMetadata
 
 
@@ -21,7 +22,17 @@ def build_pipeline(document: PdfDocument, password: str | None = None) -> tuple[
     return pipeline, parser
 
 
-def parse_bank_statement(document: PdfDocument, password: str | None = None) -> ProcessedFile:
+def parse_bank_statement(
+    document: PdfDocument, password: str | None = None, file_bytes: bytes | None = None
+) -> ProcessedFile:
+    # Check if this is an HLB statement first (needs custom handling)
+    if file_bytes and HongLeongBankParser.is_hlb_statement(file_bytes):
+        hlb_parser = HongLeongBankParser()
+        transactions = hlb_parser.parse(file_bytes)
+        if transactions:
+            metadata = TransactionMetadata("HongLeongBank")
+            return ProcessedFile(transactions, metadata)
+
     try:
         pipeline, parser = build_pipeline(document, password)
     except MissingOCRError:
