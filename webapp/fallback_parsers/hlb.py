@@ -1,6 +1,6 @@
 import re
 
-from webapp.fallback_parsers.pdf_text import (
+from .pdf_text import (
     TextItem,
     extract_text_items_from_pdf,
     group_text_items_into_rows,
